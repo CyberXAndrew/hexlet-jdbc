@@ -1,6 +1,10 @@
 package hexlet.jdbc;
 
+import hexlet.jdbc.dao.UserDAO;
+import hexlet.jdbc.model.User;
+
 import java.sql.*;
+import java.util.Optional;
 
 public class App {
     public static void main(String[] args) throws SQLException {
@@ -11,33 +15,18 @@ public class App {
                 statement.execute(sql);
             }
 
-            String sql2 = "INSERT INTO users (username, phone) VALUES (?, ?)";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(
-                    sql2, Statement.RETURN_GENERATED_KEYS)) {
-                preparedStatement.setString(1, "Tomas");
-                preparedStatement.setString(2, "123456");
-                preparedStatement.executeUpdate();
-
-                preparedStatement.setString(1, "Alina");
-                preparedStatement.setString(2, "654321");
-                preparedStatement.executeUpdate();
-
-                ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    System.out.println(generatedKeys.getLong("id")); // getLong(1)
-                } else {
-                    throw new SQLException("DB have not returned an id after saving the entity");
-                }
+            UserDAO userDAO = new UserDAO(connection);
+            User user = new User("Tomas", "123456");
+            System.out.println(user.getId());
+            userDAO.save(user);
+            System.out.println(user.getId());
+            Optional<User> optional = userDAO.findById(user.getId());
+            if (optional.isPresent()) {
+                User userFromDB = optional.get();
+                System.out.println(userFromDB.getId() == user.getId());
             }
 
-            String sql3 = "SELECT * FROM users";
-            try (Statement statement3 = connection.createStatement()) {
-                ResultSet resultSet = statement3.executeQuery(sql3);
-                while (resultSet.next()) {
-                    System.out.println(resultSet.getString("username"));
-                    System.out.println(resultSet.getString("phone"));
-                }
-            }
+            userDAO.deleteById(user.getId());
         }
     }
 }
