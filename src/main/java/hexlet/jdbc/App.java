@@ -11,9 +11,23 @@ public class App {
                 statement.execute(sql);
             }
 
-            String sql2 = "INSERT INTO users (username, phone) VALUES ('tommy', '123456789')";
-            try (Statement statement2 = connection.createStatement()) {
-                statement2.executeUpdate(sql2);
+            String sql2 = "INSERT INTO users (username, phone) VALUES (?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(
+                    sql2, Statement.RETURN_GENERATED_KEYS)) {
+                preparedStatement.setString(1, "Tomas");
+                preparedStatement.setString(2, "123456");
+                preparedStatement.executeUpdate();
+
+                preparedStatement.setString(1, "Alina");
+                preparedStatement.setString(2, "654321");
+                preparedStatement.executeUpdate();
+
+                ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    System.out.println(generatedKeys.getLong("id")); // getLong(1)
+                } else {
+                    throw new SQLException("DB have not returned an id after saving the entity");
+                }
             }
 
             String sql3 = "SELECT * FROM users";
